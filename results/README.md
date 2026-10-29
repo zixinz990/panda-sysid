@@ -85,7 +85,7 @@ saw, against 10.0 and 9.8 mm with the published values (largest error
 `replay/p6_h1`, `h1_h2` and `h2_p1` (MP4 and GIF) show the three moves no
 fit used: the robot's measured joint angles and the simulations of the
 identified model (green) and of the published values without delays (red)
-on the same commands, at true scale.
+on the same commands, their errors drawn five times larger.
 
 ## Files
 

@@ -10,9 +10,10 @@ motion, and fits a MuJoCo model of your arm:
 - the **delays of the torque controller**, which a simulation must reproduce;
 - the range of the **torque bias** the robot's gravity compensation leaves.
 
-Our Panda on the three moves no fit used, at true scale. White: the robot's
-measured joint angles; green: the identified model; red: the published values
-without delays. Numbers are the mean end-effector error of green and red.
+Our Panda on the three moves no fit used. White: the robot's measured joint
+angles; green: the identified model; red: the published values without
+delays. The simulated arms' errors are drawn five times larger; the numbers
+are the true mean end-effector errors of green and red.
 
 **P6 to H1** (24 cm, joints up to 63 deg): 2.7 mm and 6.2 mm
 

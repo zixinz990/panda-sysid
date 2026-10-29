@@ -10,7 +10,8 @@ Outputs in --out:
   <from>_<to>.mp4  per move no fit used (--video-runs), e.g. h1_h2.mp4: the
                    robot's measured joint angles and the simulations of
                    --model-b (green) and --model-a (red) on the same
-                   commands, at true scale, with the end-effector paths
+                   commands, their joint errors drawn --magnify times
+                   larger, with the end-effector paths
   <from>_<to>.gif  the same, smaller (for the README)
   moves.png        mean end-effector error per move, both models
   moves.json       end-effector errors per move (mm)
@@ -100,9 +101,12 @@ def make_video(args) -> None:
   from panda_sysid import model as sysid_model
   from panda_sysid import video
 
-  move, label, names, stem, speed = args
+  move, label, names, stem, speed, magnify = args
   ee = {key: ee_positions(move[key]) for key in ("real", "a", "b")}
   err = {key: np.linalg.norm(ee[key] - ee["real"], axis=1) * 1000 for key in ("a", "b")}
+  # The simulated arms are drawn with their joint errors magnified; the numbers stay true.
+  shown = {key: move["real"] + magnify * (move[key] - move["real"]) for key in ("a", "b")}
+  ee.update({key: ee_positions(shown[key]) for key in ("a", "b")})
 
   spec = sysid_model.make_spec(40, 20)
   sysid_model.add_render_settings(spec, W, H)
@@ -148,7 +152,8 @@ def make_video(args) -> None:
            (f"Simulation, {names['b']} model, same commands: green", rgba["b"][:3], big),
            (f"Simulation before identification ({names['a']}): red", rgba["a"][:3], big),
            (f"Move {label.replace('->', ' to ')}, which no fit used: end effector {move['travel_mm'] / 10:.0f} cm, "
-            f"joints up to {move['joint_deg']:.0f} deg. True scale, {speed:g}x speed.", (0.35, 0.35, 0.38), small)]
+            f"joints up to {move['joint_deg']:.0f} deg. Errors drawn {magnify:g}x, {speed:g}x speed.",
+            (0.35, 0.35, 0.38), small)]
 
   def rgb255(color):
     return tuple(int(255 * c) for c in color[:3])
@@ -169,7 +174,7 @@ def make_video(args) -> None:
       path(renderer.scene, ee["real"][upto], dark, 0.006)
       frame = renderer.render().astype(float)
       for key in ("a", "b"):
-        d_sim.qpos[:7] = move[key][k]
+        d_sim.qpos[:7] = shown[key][k]
         mujoco.mj_forward(model, d_sim)
         renderer.update_scene(d_sim, camera=cam)
         scn = renderer.scene
@@ -192,7 +197,7 @@ def make_video(args) -> None:
       draw = ImageDraw.Draw(image)
       for i, (text, color, font) in enumerate(lines):
         draw.text((36, 26 + 42 * i), text, font=font, fill=rgb255(color))
-      draw.text((36, H - 110), "End-effector distance to the real one:", font=big, fill=rgb255(dark))
+      draw.text((36, H - 110), "End-effector distance to the real one (true size):", font=big, fill=rgb255(dark))
       draw.text((36, H - 66), f"{names['b']} {err['b'][k]:5.1f} mm", font=big, fill=rgb255(rgba["b"]))
       draw.text((420, H - 66), f"before identification {err['a'][k]:5.1f} mm", font=big, fill=rgb255(rgba["a"]))
       writer.add_image(np.asarray(image))
@@ -250,6 +255,7 @@ def main() -> None:
   parser.add_argument("--name-b", default="identified")
   parser.add_argument("--video-runs", default="", help="runs whose moves get a video (default: those no fit used)")
   parser.add_argument("--speed", type=float, default=3.0, help="playback speed of the videos")
+  parser.add_argument("--magnify", type=float, default=5.0, help="of the simulated arms' joint errors in the videos")
   parser.add_argument("--gpu", help="EGL device of the renderer")
   parser.add_argument("--out", required=True)
   args = parser.parse_args()
@@ -274,7 +280,7 @@ def main() -> None:
   stems = [out / labels[i].lower().replace("->", "_") for i in shown]
   from panda_sysid import video
   with video.render_pool(1, video.parse_gpus(args.gpu)) as pool:
-    pool.map(make_video, [(moves[i], labels[i], {"a": args.name_a, "b": args.name_b}, stem, args.speed)
+    pool.map(make_video, [(moves[i], labels[i], {"a": args.name_a, "b": args.name_b}, stem, args.speed, args.magnify)
                           for i, stem in zip(shown, stems)])
   # GitHub shows a GIF in a README, not an MP4 from the repository.
   for stem in stems:
