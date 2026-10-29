@@ -101,7 +101,7 @@ def make_video(args) -> None:
   from panda_sysid import model as sysid_model
   from panda_sysid import video
 
-  move, label, names, stem, speed, magnify = args
+  move, names, stem, speed, magnify = args
   ee = {key: ee_positions(move[key]) for key in ("real", "a", "b")}
   err = {key: np.linalg.norm(ee[key] - ee["real"], axis=1) * 1000 for key in ("a", "b")}
   # The simulated arms are drawn with their joint errors magnified; the numbers stay true.
@@ -151,8 +151,8 @@ def make_video(args) -> None:
   lines = [("Real Panda, its measured joint angles: white arm, dark path", dark[:3], big),
            (f"Simulation, {names['b']} model, same commands: green", rgba["b"][:3], big),
            (f"Simulation before identification ({names['a']}): red", rgba["a"][:3], big),
-           (f"Move {label.replace('->', ' to ')}, which no fit used: end effector {move['travel_mm'] / 10:.0f} cm, "
-            f"joints up to {move['joint_deg']:.0f} deg. Errors drawn {magnify:g}x, {speed:g}x speed.",
+           (f"A move no fit used: end effector {move['travel_mm'] / 10:.0f} cm, joints up to "
+            f"{move['joint_deg']:.0f} deg. Errors drawn {magnify:g}x, {speed:g}x speed.",
             (0.35, 0.35, 0.38), small)]
 
   def rgb255(color):
@@ -280,7 +280,7 @@ def main() -> None:
   stems = [out / labels[i].lower().replace("->", "_") for i in shown]
   from panda_sysid import video
   with video.render_pool(1, video.parse_gpus(args.gpu)) as pool:
-    pool.map(make_video, [(moves[i], labels[i], {"a": args.name_a, "b": args.name_b}, stem, args.speed, args.magnify)
+    pool.map(make_video, [(moves[i], {"a": args.name_a, "b": args.name_b}, stem, args.speed, args.magnify)
                           for i, stem in zip(shown, stems)])
   # GitHub shows a GIF in a README, not an MP4 from the repository.
   for stem in stems:

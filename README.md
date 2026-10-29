@@ -15,17 +15,17 @@ angles; green: the identified model; red: the published values without
 delays. The simulated arms' errors are drawn five times larger; the numbers
 are the true mean end-effector errors of green and red.
 
-**P6 to H1** (24 cm, joints up to 63 deg): 2.7 mm and 6.2 mm
+**Move 1** (end effector 24 cm, joints up to 63 deg): 2.7 mm and 6.2 mm
 
-![P6 to H1](results/replay/p6_h1.gif)
+![Move 1](results/replay/p6_h1.gif)
 
-**H1 to H2** (36 cm, joints up to 42 deg): 3.5 mm and 14.5 mm
+**Move 2** (end effector 36 cm, joints up to 42 deg): 3.5 mm and 14.5 mm
 
-![H1 to H2](results/replay/h1_h2.gif)
+![Move 2](results/replay/h1_h2.gif)
 
-**H2 to P1** (17 cm, joints up to 22 deg): 2.5 mm and 8.8 mm
+**Move 3** (end effector 17 cm, joints up to 22 deg): 2.5 mm and 8.8 mm
 
-![H2 to P1](results/replay/h2_p1.gif)
+![Move 3](results/replay/h2_p1.gif)
 
 All results: [results/README.md](results/README.md).
 
@@ -57,7 +57,7 @@ sim.draw_bias(np.random.default_rng())         # a torque bias for one episode (
 - **Campaign** (`panda_sysid.campaign`, 19 runs). Reference sessions at the
   box center for the repeatability floor, Fourier runs under Franka's position
   controller for the inertials, and sessions at six poses plus two held-out
-  ones (H1, H2) for the joints. Every run is simulated and checked before it
+  ones for the joints. Every run is simulated and checked before it
   runs, and planned again from the measured state.
 - **Link inertials** (`panda_sysid.inertial`). Least squares on `tau_J`,
   kept physically consistent by a log-det divergence from Franka's values
@@ -94,7 +94,7 @@ cmake --build real/build
    ```bash
    uv run python scripts/plan_campaign.py --box runs/workspace_box.json --video --out runs/campaign
    ```
-3. **Move the arm to P1**, watch the video, run it.
+3. **Move the arm to the campaign's first pose**, watch the video, run it.
    ```bash
    real/build/stream_state 172.16.0.2 1 1 > runs/state.txt
    uv run python scripts/move.py --state runs/state.txt --to-pose P1 --poses runs/campaign/poses.json \
