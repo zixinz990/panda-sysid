@@ -1,0 +1,36 @@
+[project]
+name = "panda-sysid"
+version = "0.1.0"
+description = "System identification of the Franka Emika Panda for MuJoCo: link inertials, joint friction, damping and armature, and the delays of the torque controller."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "src/panda_sysid/assets/franka_emika_panda/LICENSE"]
+requires-python = ">=3.10"
+dependencies = [
+  "mujoco[sysid]>=3.16.0",
+  "numpy",
+  "scipy",
+  "matplotlib",
+  "mediapy",
+  "pillow",
+]
+keywords = ["franka", "panda", "mujoco", "system identification", "sim-to-real"]
+
+[project.optional-dependencies]
+# scripts/record_poses.py: the live view in the browser.
+viewer = ["viser", "mjviser"]
+
+[dependency-groups]
+dev = ["pytest", "ruff"]
+
+[build-system]
+requires = ["uv_build>=0.11.26,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 120
+indent-width = 2
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E402", "B007", "B905"]
