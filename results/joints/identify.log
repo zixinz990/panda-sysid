@@ -1,0 +1,68 @@
+kp 40: 340 chunks of 4.0 s
+controller: Delays(dq_lag=3, torque_lag=2, cutoff=100.0, rate_limit=1.0)
+iter: 0    y: 2.005e+08  log10mu: -inf  ratio: 1.2      dx: 14       reduction: 1.4e+08
+iter: 1    y: 5.837e+07  log10mu: -inf  ratio: 1.3      dx: 4.3      reduction: 1.7e+07
+iter: 2    y: 4.167e+07  log10mu: -inf  ratio: 1.3      dx: 4.6      reduction: 2.3e+06
+iter: 3    y: 3.94e+07   log10mu: -inf  ratio: 1.7      dx: 0.89     reduction: 1e+06  
+iter: 4    y: 3.837e+07  log10mu: -inf  ratio: 1.7      dx: 0.36     reduction: 1.6e+06
+iter: 5    y: 3.672e+07  log10mu: -inf  ratio: 1.5      dx: 0.29     reduction: 3.6e+06
+iter: 6    y: 3.317e+07  log10mu: -inf  ratio: 1.2      dx: 0.21     reduction: 2e+06  
+iter: 7    y: 3.122e+07  log10mu: -inf  ratio: 1.2      dx: 0.048    reduction: 1.9e+05
+iter: 8    y: 3.103e+07  log10mu: -inf  ratio: 1.2      dx: 0.013    reduction: 3.4e+04
+iter: 9    y: 3.1e+07    log10mu: -inf  ratio: 1.7      dx: 0.07     reduction: 2.4e+04
+iter: 10   y: 3.097e+07  log10mu: -inf  ratio: 1.9      dx: 0.079    reduction: 2.4e+04
+iter: 11   y: 3.095e+07  log10mu: -inf  ratio: 1.9      dx: 0.096    reduction: 2.5e+04
+iter: 12   y: 3.092e+07  log10mu: -inf  ratio: 1.8      dx: 0.096    reduction: 2.2e+04
+iter: 13   y: 3.09e+07   log10mu: -inf  ratio: 1.8      dx: 0.073    reduction: 2e+04  
+iter: 14   y: 3.088e+07  log10mu: -inf  ratio: 1.8      dx: 0.08     reduction: 2e+04  
+iter: 15   y: 3.086e+07  log10mu: -inf  ratio: 1.8      dx: 0.072    reduction: 1.9e+04
+iter: 16   y: 3.084e+07  log10mu: -inf  ratio: 1.9      dx: 0.088    reduction: 2e+04  
+iter: 17   y: 3.082e+07  log10mu: -inf  ratio: 1.8      dx: 0.086    reduction: 2e+04  
+iter: 18   y: 3.08e+07   log10mu: -inf  ratio: 1.8      dx: 0.086    reduction: 1.8e+04
+iter: 19   y: 3.078e+07  log10mu: -inf  ratio: 1.8      dx: 0.073    reduction: 1.5e+04
+iter: 20   y: 3.077e+07  log10mu: -inf  ratio: 1.7      dx: 0.059    reduction: 1.3e+04
+iter: 21   y: 3.076e+07  log10mu: -inf  ratio: 1.7      dx: 0.033    reduction: 1.2e+04
+iter: 22   y: 3.074e+07  log10mu: -inf  ratio: 1.7      dx: 0.082    reduction: 1.3e+04
+iter: 23   y: 3.073e+07  log10mu: -inf  ratio: 1.7      dx: 0.067    reduction: 1.2e+04
+iter: 24   y: 3.072e+07  log10mu: -inf  ratio: 1.7      dx: 0.016    reduction: 1e+04  
+iter: 25   y: 3.071e+07  log10mu: -inf  ratio: 2.2      dx: 0.0008   reduction: 2.2e+04
+iter: 26   y: 3.069e+07  log10mu: -inf  ratio: 1.2      dx: 0.075    reduction: 3.7e+04
+iter: 27   y: 3.065e+07  log10mu: -inf  ratio: 1.4      dx: 0.075    reduction: 2.6e+04
+iter: 28   y: 3.062e+07  log10mu: -inf  ratio: 1.3      dx: 0.0031   reduction: 7.5e+03
+iter: 29   y: 3.062e+07  log10mu: -inf  ratio: 1.3      dx: 0.0024   reduction: 1.8e+03
+iter: 30   y: 3.061e+07  log10mu: -inf  ratio: 1.3      dx: 0.0014   reduction: 3.9e+02
+iter: 31   y: 3.061e+07  log10mu: -inf  ratio: 1.2      dx: 0.00029  reduction: 47     
+iter: 32   y: 3.061e+07  log10mu: -inf  ratio: 0.95     dx: 0.00021  reduction: 6.6    
+iter: 33   y: 3.061e+07  log10mu: -inf  ratio: 0.46     dx: 5.4e-05  reduction: 0.41   
+iter: 34   y: 3.061e+07  log10mu:  7.8  ratio: 2.4      dx: 1.8e-13  reduction: 7.5e-09
+Terminated after 34 iterations: norm(dx) < tol. y: 3.061e+07, Residual evals: 1039
+total time 1152.7s of which residual 90.9%
+cost 3.06131e+07 over 19040000 residuals
+         param     start       fit     +-95%
+     armature5    0.0740    0.0878    0.0002
+     armature6    0.0740    0.0829    0.0003
+     armature7    0.0740    0.0876    0.0001
+ frictionloss1    0.2730    0.7227    0.0003
+ frictionloss2    0.4360    1.1035    0.0004
+ frictionloss3    0.3200    0.6374    0.0003
+ frictionloss4    0.6400    0.8294    0.0004
+ frictionloss5    0.4200    0.6107    0.0003
+ frictionloss6    0.1520    0.5869    0.0003
+ frictionloss7    0.2820    0.4454    0.0003
+      damping1    0.1000    3.1856    0.0160
+      damping2    0.1000    1.6906    0.0163
+      damping3    0.1000    4.9413    0.0189
+      damping4    0.1000    0.5773    0.0152
+      damping5    0.0300    0.0000    0.0142
+      damping6    0.0300    0.0000    0.0127
+      damping7    0.0300    0.0000    0.0091
+         bias1    0.0000    0.1581    0.0002
+         bias2    0.0000    0.0600    0.0002
+         bias3    0.0000    0.2234    0.0002
+         bias4    0.0000   -0.0459    0.0002
+         bias5    0.0000    0.0260    0.0002
+         bias6    0.0000   -0.0047    0.0002
+         bias7    0.0000    0.1167    0.0002
+RMS start: q (deg) [0.4469 0.52   0.4511 0.1936 0.1908 0.3819 0.2321]  dq (deg/s) [0.532 0.601 0.483 0.264 0.428 0.623 1.025]
+RMS   fit: q (deg) [0.1659 0.1872 0.1717 0.1267 0.1165 0.1008 0.0938]  dq (deg/s) [0.316 0.34  0.254 0.279 0.359 0.314 0.455]
+wrote results/joints/params.json results/joints/model.json
