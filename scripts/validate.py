@@ -136,10 +136,11 @@ def main() -> None:
     for i, (label, *_) in enumerate(models):
       ax.bar(np.arange(7) + (i - (len(models) - 1) / 2) * width, result["runs"][run][label]["session_deg"],
              width, label=label, color=colors[i % len(colors)])
-    ax.plot(np.arange(7), floor, "k_", markersize=30, mew=2, label="repeatability: same commands, 4 runs on the robot")
+    ax.hlines(floor, np.arange(7) - 0.4, np.arange(7) + 0.4, colors="k", lw=2, zorder=3,
+              label="repeatability: same commands, 4 runs on the robot")  # across each joint's bars
     ax.set(xticks=range(7), xticklabels=[f"joint {j + 1}" for j in range(7)], ylabel="angle error, RMS (deg)",
            title=f"{names[run]}: simulated minus measured joint angles over the session")
-    ax.legend(fontsize=8, markerscale=0.5)
+    ax.legend(fontsize=8)
   run = runs[0]
   t = np.arange(len(errors[(models[0][0], run)])) * fit.DT
   ax = axes[-1]
