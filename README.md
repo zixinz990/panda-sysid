@@ -13,8 +13,14 @@ recordings:
 - the range of the **torque bias** that the robot's gravity compensation
   leaves, which a simulation should randomize.
 
-On our Panda, a simulation of the identified model replays held-out runs
-about as closely as the robot repeats itself (see [Results](#results-on-our-panda)).
+![The real Panda and a simulation of its identified model on the same move](results/replay/real_vs_sim.gif)
+
+Our Panda on a move that no fit used (end effector 36 cm, joints up to 42
+deg): its measured joint angles (white arm, dark path) and a simulation of
+the identified model on the same commands (green), at true scale. The end
+effectors stay 3.5 mm apart on average ([MP4](results/replay/real_vs_sim.mp4);
+all results in [results/README.md](results/README.md)).
+
 Every motion is simulated, checked and shown as a video before it runs on the robot.
 
 The model is the Panda with the Franka Hand from
@@ -34,85 +40,6 @@ sim.draw_bias(np.random.default_rng())         # a torque bias for one episode (
 
 `panda_sysid.delayed.rollout` is a reference implementation of the
 controller with its delays around `mj_step`.
-
-## Results on our Panda
-
-Our robot: a Franka Emika Panda (production 2019, system version with FCI
-server version 4, libfranka 0.8.0) with the Franka Hand (0.73 kg in Desk),
-controlled from a PC without a real-time kernel. Joint impedance kp 40, kd
-20 on every joint. The campaign ran on 2026-10-28; `results/` holds every fit.
-
-**Link inertials** (`results/inertial`). Six Fourier runs under Franka's
-joint position controller. A fit that stays physically consistent predicts
-the measured joint torques of a held-out trajectory to 0.05-0.23 N m RMS
-per joint; Franka's published inertials miss by up to 3.0 N m (joint 2) and
-2.6 N m (joint 4). At rest at eight other poses, the fit agrees with the
-measured torques as well as Franka's own (closed-source) model does.
-
-| Link | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Mass (kg), Franka's published | 2.79 | 2.54 | 2.25 | 2.20 | 2.29 | 1.35 | 0.36 |
-| Mass (kg), identified | 2.69 | 1.65 | 2.30 | 2.51 | 2.47 | 1.55 | 0.83 |
-
-The torques fix only 43 combinations of the 70 inertial parameters, so
-single masses are not unique; the fit keeps every combination the data
-cannot see at Franka's values. The mass matrix and the gravity torques are
-what the data determine.
-
-**Joints** (`results/joints`, `results/model.json`). Fitted on 10 runs
-under joint impedance (four repeats of a reference session and six pose
-sessions), with the identified inertials and the delays below, starting
-from the published values.
-
-| Joint | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Dry friction (N m) | 0.723 | 1.104 | 0.637 | 0.829 | 0.611 | 0.587 | 0.445 |
-| Damping (N m s/rad) | 3.19 | 1.69 | 4.94 | 0.58 | 0 | 0 | 0 |
-| Armature (kg m^2) | 0.195* | 0.195* | 0.195* | 0.195* | 0.088 | 0.083 | 0.088 |
-| Torque bias, center (N m) | 0.19 | 0.35 | 0.19 | 0.06 | 0.03 | -0.03 | 0.13 |
-| Torque bias, +- half-width (N m) | 0.34 | 0.21 | 0.30 | 0.30 | 0.20 | 0.18 | 0.16 |
-
-\* Not identifiable from these slow runs (any value from 0.02 to 0.4 moves
-the replays by less than 0.003 deg); left out of the fit at the FR3's
-published value.
-
-**Controller delays**: the robot's measured joint velocity is 3 ms late, a
-torque command acts 2 ms after it is sent, and libfranka low-pass filters
-the command (100 Hz) and limits its rate (1 N m per ms).
-
-**Validation** (`results/validate`). Whole held-out runs at two poses that
-no fit saw (H1, H2, three minutes each), replayed from their first measured
-state; error of the simulated joint angles over the session (RMS, deg). The
-floor is how far four repeats of one session on the robot land from each
-other. "Published values" are Franka's inertials, the nominal joint values
-and an ideal controller (no delays), what a simulation of the Panda
-usually starts from.
-
-| Joint | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Floor: the robot against itself | 0.17 | 0.25 | 0.11 | 0.08 | 0.14 | 0.10 | 0.14 |
-| H1, published values | 0.40 | 0.62 | 0.37 | 0.21 | 0.35 | 0.39 | 0.28 |
-| H1, identified, with H1's bias | 0.14 | 0.26 | 0.09 | 0.12 | 0.21 | 0.12 | 0.12 |
-| H2, published values | 0.74 | 0.83 | 0.69 | 0.24 | 0.22 | 0.36 | 0.29 |
-| H2, identified, with H2's bias | 0.12 | 0.37 | 0.10 | 0.15 | 0.14 | 0.10 | 0.09 |
-
-![Validation](results/validate/validate.png)
-
-The bias changes with the pose: with each other's bias, H1 and H2 miss by
-0.54-0.56 deg on joint 1 and 0.75-0.77 deg on joint 3. So a simulation
-should draw it for each episode from the range in `model.json`, which
-covers the 13 runs at eight poses plus 0.1 N m on each side.
-
-**Large moves** (`results/replay`). The slow straight-line moves between
-the poses (end effector 17-38 cm, joints up to 22-63 deg), replayed from
-their first measured state, with the bias at the center of its range: the
-end effector misses the robot's by 3.2 mm on average on the moves in the
-fit and 2.9 mm on three moves no fit saw, against 10.0 and 9.8 mm with the
-published values (largest error 10.3 mm against 24.0 mm).
-`results/replay/moves.mp4` shows them, the simulated arms' errors magnified
-five times.
-
-![Large moves](results/replay/moves.png)
 
 ## How it works
 
@@ -248,8 +175,9 @@ real/build/stream_state 172.16.0.2 1 1          # the robot's state, once
        --out runs/fit/validate
    ```
 
-`results/run_all.sh` is steps 5 and 6 on our logs, plus the video of the
-large moves (`scripts/replay_video.py`).
+`results/run_all.sh` is steps 5 and 6 on our logs, plus the errors on the
+large moves and the video (`scripts/replay_video.py`); `results/README.md`
+describes what came out.
 
 ## Data
 
