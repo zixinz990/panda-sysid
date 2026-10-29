@@ -82,11 +82,10 @@ saw, against 10.0 and 9.8 mm with the published values (largest error
 
 ![Large moves](replay/moves.png)
 
-`replay/real_vs_sim.mp4` (and its GIF) shows the three moves no fit used,
-one after the other, each from the robot's measured state at its start: the
-robot's measured joint angles and the simulations of the identified model
-(green) and of the published values without delays (red) on the same
-commands, at true scale.
+`replay/p6_h1`, `h1_h2` and `h2_p1` (MP4 and GIF) show the three moves no
+fit used: the robot's measured joint angles and the simulations of the
+identified model (green) and of the published values without delays (red)
+on the same commands, at true scale.
 
 ## Files
 
@@ -98,5 +97,5 @@ commands, at true scale.
 | `joints/` | The joint fit: start, fitted values and confidence intervals (`params.json`), its log, `model.json` |
 | `bias/` | The bias each impedance run needs with the joint values fixed (`bias_per_run.json`) |
 | `validate/` | Whole-run replays of H1 and H2 against the floor (`validate.json`, `validate.png`) |
-| `replay/` | End-effector errors on the large moves (`moves.json`, `moves.png`) and the video of one |
+| `replay/` | End-effector errors on the large moves (`moves.json`, `moves.png`) and a video of each move no fit used |
 | `run_all.sh` | Every fit above, in order, from the campaign's logs in `data/campaign` |
