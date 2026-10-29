@@ -82,10 +82,11 @@ saw, against 10.0 and 9.8 mm with the published values (largest error
 
 ![Large moves](replay/moves.png)
 
-`replay/real_vs_sim.mp4` (and its GIF) shows the move from H1 to H2, which
-no fit used: the robot's measured joint angles and the simulations of the
-identified model (green) and of the published values without delays (red)
-on the same commands, at true scale.
+`replay/real_vs_sim.mp4` (and its GIF) shows the three moves no fit used,
+one after the other, each from the robot's measured state at its start: the
+robot's measured joint angles and the simulations of the identified model
+(green) and of the published values without delays (red) on the same
+commands, at true scale.
 
 ## Files
 

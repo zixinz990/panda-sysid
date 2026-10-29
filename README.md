@@ -15,13 +15,15 @@ recordings:
 
 ![The real Panda and simulations of it on the same move](results/replay/real_vs_sim.gif)
 
-Our Panda on a move that no fit used (end effector 36 cm, joints up to 42
-deg): its measured joint angles (white arm, dark path), a simulation of the
-identified model on the same commands (green) and one with the published
-values and no delays, as before identification (red), at true scale. The
-simulated end effectors miss the real one by 3.5 mm on average, against
-14.5 mm before identification ([MP4](results/replay/real_vs_sim.mp4); all
-results in [results/README.md](results/README.md)).
+Our Panda on the three moves that no fit used, one after the other (P6 to
+H1 to H2 to P1, 77 cm of end-effector travel; each starts from the robot's
+measured state): its measured joint angles (white arm, dark path), a
+simulation of the identified model on the same commands (green) and one
+with the published values and no delays, as before identification (red), at
+true scale. The simulated end effectors miss the real one by 2.9 mm on
+average, against 9.8 mm before identification
+([MP4](results/replay/real_vs_sim.mp4); all results in
+[results/README.md](results/README.md)).
 
 Every motion is simulated, checked and shown as a video before it runs on the robot.
 
