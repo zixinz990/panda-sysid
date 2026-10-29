@@ -104,8 +104,17 @@ session. Then the simulation gets the same commands as the robot. The table
 gives the RMS error of the simulated joint angles during the session, in
 degrees.
 
-Repeatability is the difference between four runs of the reference session
-on the robot. No model can have a smaller error than this difference.
+The repeatability is the difference between runs on the robot with the same
+commands. The robot did the reference session (one minute at the center
+pose) four times. The commands were the same each time, but the measured
+joint angles were not the same. For each of the six pairs of runs, we
+calculated the RMS difference of the joint angles. The repeatability is the
+average of these six differences.
+
+No model can have a smaller error than the repeatability. But we measured
+the repeatability at the center pose, in sessions of one minute. The test
+sessions are at two different poses and are three minutes long. Thus, the
+repeatability is only an approximate minimum of the error in these tests.
 
 The table and the figure compare these models:
 
@@ -119,7 +128,7 @@ The table and the figure compare these models:
 
 | Joint | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Repeatability: the robot compared with the robot | 0.17 | 0.25 | 0.11 | 0.08 | 0.14 | 0.10 | 0.14 |
+| Repeatability (the same commands, 4 runs on the robot) | 0.17 | 0.25 | 0.11 | 0.08 | 0.14 | 0.10 | 0.14 |
 | Pose 1, before identification | 0.40 | 0.62 | 0.36 | 0.21 | 0.35 | 0.39 | 0.28 |
 | Pose 1, identified, bias in the middle of its range | 0.34 | 0.49 | 0.38 | 0.19 | 0.22 | 0.17 | 0.12 |
 | Pose 1, identified, bias from the run | 0.14 | 0.26 | 0.09 | 0.12 | 0.21 | 0.12 | 0.12 |

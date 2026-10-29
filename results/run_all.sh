@@ -9,7 +9,7 @@ uv run python scripts/bias_per_run.py --logs data/campaign --model results/joint
   --out results/bias --model-out results/model.json
 uv run python scripts/validate.py --logs data/campaign --model "before identification:nominal" \
   --model "identified, bias in the middle of its range:results/model.json:1:center" \
-  --model "identified, bias fitted to the run:results/model.json:1:results/bias/bias_per_run.json" \
+  --model "identified, bias from the run:results/model.json:1:results/bias/bias_per_run.json" \
   --out results/validate
 # The errors on the large moves and a video of each move no fit used (EGL, in a spawned process).
 uv run python scripts/replay_video.py --logs data/campaign --out results/replay \

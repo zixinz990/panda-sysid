@@ -10,7 +10,7 @@
    "gravity_offset": true,
    "run_bias": "center"
   },
-  "identified, bias fitted to the run": {
+  "identified, bias from the run": {
    "model": "results/model.json",
    "gravity_offset": true,
    "run_bias": "results/bias/bias_per_run.json"
@@ -123,7 +123,7 @@
      0.117
     ]
    },
-   "identified, bias fitted to the run": {
+   "identified, bias from the run": {
     "whole_deg": [
      0.154,
      0.249,
@@ -185,7 +185,7 @@
      0.094
     ]
    },
-   "identified, bias fitted to the run": {
+   "identified, bias from the run": {
     "whole_deg": [
      0.148,
      0.353,

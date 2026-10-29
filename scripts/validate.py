@@ -21,7 +21,7 @@ Outputs in --out:
 
 Example:
   uv run python scripts/validate.py --logs data/campaign --model "before identification:nominal" \\
-      --model "identified, bias fitted to the run:results/model.json:1:results/bias/bias_per_run.json" \\
+      --model "identified, bias from the run:results/model.json:1:results/bias/bias_per_run.json" \\
       --out results/validate
 """
 
@@ -136,10 +136,10 @@ def main() -> None:
     for i, (label, *_) in enumerate(models):
       ax.bar(np.arange(7) + (i - (len(models) - 1) / 2) * width, result["runs"][run][label]["session_deg"],
              width, label=label, color=colors[i % len(colors)])
-    ax.plot(np.arange(7), floor, "k_", markersize=30, mew=2, label="the robot against itself (repeatability)")
+    ax.plot(np.arange(7), floor, "k_", markersize=30, mew=2, label="repeatability: same commands, 4 runs on the robot")
     ax.set(xticks=range(7), xticklabels=[f"joint {j + 1}" for j in range(7)], ylabel="angle error, RMS (deg)",
            title=f"{names[run]}: simulated minus measured joint angles over the session")
-    ax.legend(fontsize=8)
+    ax.legend(fontsize=8, markerscale=0.5)
   run = runs[0]
   t = np.arange(len(errors[(models[0][0], run)])) * fit.DT
   ax = axes[-1]
