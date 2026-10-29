@@ -8,8 +8,9 @@ with its delays and the torque bias at the center of its range).
 
 Outputs in --out:
   real_vs_sim.mp4  one move (--video-run): the robot's measured joint angles
-                   and --model-b's simulation (green) on the same commands,
-                   at true scale, with both end-effector paths
+                   and the simulations of --model-b (green) and --model-a
+                   (red) on the same commands, at true scale, with the
+                   end-effector paths
   real_vs_sim.gif  the same, smaller (for the README)
   moves.png        mean end-effector error per move, both models
   moves.json       end-effector errors per move (mm)
@@ -99,10 +100,11 @@ def make_video(args) -> None:
   from panda_sysid import model as sysid_model
   from panda_sysid import video
 
-  move, label, name, out, speed = args
-  real, sim = move["real"], move["b"]
-  ee_real, ee_sim = ee_positions(real), ee_positions(sim)
-  err = np.linalg.norm(ee_sim - ee_real, axis=1) * 1000
+  move, label, names, out, speed = args
+  real = move["real"]
+  ee_real = ee_positions(real)
+  ee = {key: ee_positions(move[key]) for key in ("a", "b")}
+  err = {key: np.linalg.norm(ee[key] - ee_real, axis=1) * 1000 for key in ("a", "b")}
 
   spec = sysid_model.make_spec(40, 20)
   sysid_model.add_render_settings(spec, W, H)
@@ -139,51 +141,59 @@ def make_video(args) -> None:
       g.segid = scn.ngeom
       scn.ngeom += 1
 
-  dark, green = (0.15, 0.15, 0.17, 1.0), (*COLORS["b"], 1.0)
-  big, small = video.font(30), video.font(22)
-  lines = [("Real Panda, its measured joint angles: white arm, dark path", dark[:3]),
-           (f"Simulation of the {name} model on the same commands: green", green[:3]),
+  dark = (0.15, 0.15, 0.17, 1.0)
+  rgba = {key: (*COLORS[key], 1.0) for key in ("a", "b")}
+  big, small = video.font(28), video.font(22)
+  lines = [("Real Panda, its measured joint angles: white arm, dark path", dark[:3], big),
+           (f"Simulation, {names['b']} model, same commands: green", rgba["b"][:3], big),
+           (f"Simulation before identification ({names['a']}): red", rgba["a"][:3], big),
            (f"Move {label.replace('->', ' to ')}, which no fit used: end effector {move['travel_mm'] / 10:.0f} cm, "
-            f"joints up to {move['joint_deg']:.0f} deg. True scale, {speed:g}x speed.", (0.35, 0.35, 0.38))]
+            f"joints up to {move['joint_deg']:.0f} deg. True scale, {speed:g}x speed.", (0.35, 0.35, 0.38), small)]
+
+  def rgb255(color):
+    return tuple(int(255 * c) for c in color[:3])
+
   step = round(0.025 / 0.001)  # path points every 25 ms
   ticks = np.arange(0, len(real), speed / FPS / 0.001).astype(int)
   with mediapy.VideoWriter(out / "real_vs_sim.mp4", (H, W), fps=FPS) as writer:
     for k in list(ticks) + [len(real) - 1] * FPS:
-      # The real arm and its path; then the simulated arm and its path alone, laid over it:
-      # the arm as a green tint inside a green outline, the path opaque (drawing both in one
-      # scene makes their coincident surfaces flicker and hides one path inside the other).
+      # The real arm and its path; then each simulated arm and its path alone, laid over it
+      # (red first, green on top): the arm as a tint inside an outline, the path opaque
+      # (drawing the arms in one scene makes their coincident surfaces flicker and hides one
+      # path inside another).
       d_real.qpos[:7] = real[k]
       mujoco.mj_forward(model, d_real)
       renderer.update_scene(d_real, camera=cam)
       upto = np.r_[np.arange(0, k + 1, step), k]
       path(renderer.scene, ee_real[upto], dark, 0.006)
       frame = renderer.render().astype(float)
-      d_sim.qpos[:7] = sim[k]
-      mujoco.mj_forward(model, d_sim)
-      renderer.update_scene(d_sim, camera=cam)
-      scn = renderer.scene
-      for i in range(scn.ngeom):
-        if scn.geoms[i].objtype == mujoco.mjtObj.mjOBJ_GEOM and scn.geoms[i].objid in arm:
-          scn.geoms[i].rgba[:] = green
-          scn.geoms[i].matid = -1
-      path(scn, ee_sim[upto], green, 0.003)
-      ghost = renderer.render().astype(float)
-      segmenter.update_scene(d_sim, camera=cam)
-      path(segmenter.scene, ee_sim[upto], green, 0.003)
-      seg = segmenter.render()
-      mask = (seg[..., 1] == mujoco.mjtObj.mjOBJ_GEOM) & np.isin(seg[..., 0], arm)
-      edge = mask & ~ndimage.binary_erosion(mask, iterations=2)
-      frame[mask] = 0.8 * frame[mask] + 0.2 * ghost[mask]
-      frame[edge] = np.array(green[:3]) * 255
-      line = seg[..., 1] == mujoco.mjtObj.mjOBJ_SITE
-      frame[line] = ghost[line]
+      for key in ("a", "b"):
+        d_sim.qpos[:7] = move[key][k]
+        mujoco.mj_forward(model, d_sim)
+        renderer.update_scene(d_sim, camera=cam)
+        scn = renderer.scene
+        for i in range(scn.ngeom):
+          if scn.geoms[i].objtype == mujoco.mjtObj.mjOBJ_GEOM and scn.geoms[i].objid in arm:
+            scn.geoms[i].rgba[:] = rgba[key]
+            scn.geoms[i].matid = -1
+        path(scn, ee[key][upto], rgba[key], 0.003)
+        ghost = renderer.render().astype(float)
+        segmenter.update_scene(d_sim, camera=cam)
+        path(segmenter.scene, ee[key][upto], rgba[key], 0.003)
+        seg = segmenter.render()
+        mask = (seg[..., 1] == mujoco.mjtObj.mjOBJ_GEOM) & np.isin(seg[..., 0], arm)
+        edge = mask & ~ndimage.binary_erosion(mask, iterations=2)
+        frame[mask] = 0.8 * frame[mask] + 0.2 * ghost[mask]
+        frame[edge] = np.array(rgba[key][:3]) * 255
+        line = seg[..., 1] == mujoco.mjtObj.mjOBJ_SITE
+        frame[line] = ghost[line]
       image = Image.fromarray(frame.astype(np.uint8))
       draw = ImageDraw.Draw(image)
-      for i, (text, color) in enumerate(lines):
-        draw.text((36, 28 + 44 * i), text, font=big if i < 2 else small,
-                  fill=tuple(int(255 * c) for c in color))
-      draw.text((36, H - 64), f"End-effector distance, simulation to real: {err[k]:4.1f} mm", font=big,
-                fill=tuple(int(255 * c) for c in dark[:3]))
+      for i, (text, color, font) in enumerate(lines):
+        draw.text((36, 26 + 42 * i), text, font=font, fill=rgb255(color))
+      draw.text((36, H - 110), "End-effector distance to the real one:", font=big, fill=rgb255(dark))
+      draw.text((36, H - 66), f"{names['b']} {err['b'][k]:5.1f} mm", font=big, fill=rgb255(rgba["b"]))
+      draw.text((420, H - 66), f"before identification {err['a'][k]:5.1f} mm", font=big, fill=rgb255(rgba["a"]))
       writer.add_image(np.asarray(image))
   renderer.close()
   segmenter.close()
@@ -261,7 +271,7 @@ def main() -> None:
   i = runs.index(args.video_run)
   from panda_sysid import video
   with video.render_pool(1, video.parse_gpus(args.gpu)) as pool:
-    pool.apply(make_video, ((moves[i], labels[i], args.name_b, out, args.speed),))
+    pool.apply(make_video, ((moves[i], labels[i], {"a": args.name_a, "b": args.name_b}, out, args.speed),))
   # GitHub shows a GIF in a README, not an MP4 from the repository.
   subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(out / "real_vs_sim.mp4"), "-vf",
                   "fps=15,scale=800:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];"

@@ -13,13 +13,15 @@ recordings:
 - the range of the **torque bias** that the robot's gravity compensation
   leaves, which a simulation should randomize.
 
-![The real Panda and a simulation of its identified model on the same move](results/replay/real_vs_sim.gif)
+![The real Panda and simulations of it on the same move](results/replay/real_vs_sim.gif)
 
 Our Panda on a move that no fit used (end effector 36 cm, joints up to 42
-deg): its measured joint angles (white arm, dark path) and a simulation of
-the identified model on the same commands (green), at true scale. The end
-effectors stay 3.5 mm apart on average ([MP4](results/replay/real_vs_sim.mp4);
-all results in [results/README.md](results/README.md)).
+deg): its measured joint angles (white arm, dark path), a simulation of the
+identified model on the same commands (green) and one with the published
+values and no delays, as before identification (red), at true scale. The
+simulated end effectors miss the real one by 3.5 mm on average, against
+14.5 mm before identification ([MP4](results/replay/real_vs_sim.mp4); all
+results in [results/README.md](results/README.md)).
 
 Every motion is simulated, checked and shown as a video before it runs on the robot.
 
