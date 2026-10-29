@@ -21,7 +21,7 @@
 // (m_total, F_x_Ctotal), presumably what the robot adds to the command; it is computed
 // after the motion, so the control loop does no extra work.
 //
-// Usage: joint_impedance <robot-hostname> <traj.csv> <log.csv> [--kp 80] [--kd 20]
+// Usage: joint_impedance <robot-hostname> <traj.csv> <log.csv> [--kp 40] [--kd 20]
 //          [--max-error 0.15] [--max-speed 1.0] [--max-torque-fraction 0.5]
 //          [--cutoff 100] [--rt] [--yes]
 // --kp and --kd take one value or seven comma-separated values. --cutoff 1000 turns
@@ -168,7 +168,7 @@ struct Options {
 
 Options parse_options(int argc, char** argv) {
   Options opt;
-  opt.kp.fill(80.0);
+  opt.kp.fill(40.0);
   opt.kd.fill(20.0);
   for (int i = 4; i < argc; i++) {
     const std::string arg = argv[i];
@@ -215,7 +215,7 @@ std::string format_row(const Row& row) {
 int main(int argc, char** argv) {
   if (argc < 4) {
     std::cerr << "Usage: " << argv[0]
-              << " <robot-hostname> <traj.csv> <log.csv> [--kp 80] [--kd 20] [--max-error 0.15]"
+              << " <robot-hostname> <traj.csv> <log.csv> [--kp 40] [--kd 20] [--max-error 0.15]"
                  " [--max-speed 1.0] [--max-torque-fraction 0.5] [--cutoff 100] [--rt] [--yes]"
               << std::endl;
     return -1;

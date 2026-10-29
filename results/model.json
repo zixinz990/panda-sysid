@@ -116,19 +116,19 @@
   },
   "joints": {
    "friction": [
-    0.666,
-    1.103,
-    0.586,
-    0.831,
+    0.723,
+    1.104,
+    0.637,
+    0.829,
     0.611,
     0.587,
     0.445
    ],
    "damping": [
-    6.354,
-    1.678,
-    6.232,
-    0.457,
+    3.186,
+    1.691,
+    4.941,
+    0.577,
     0.0,
     0.0,
     0.0
@@ -136,10 +136,10 @@
    "armature": [
     0.195,
     0.195,
-    0.276,
-    0.085,
+    0.195,
+    0.195,
     0.088,
-    0.086,
+    0.083,
     0.088
    ]
   }
@@ -152,16 +152,16 @@
  },
  "torque_bias": {
   "center": [
-   0.18,
+   0.19,
    0.35,
-   0.18,
+   0.19,
    0.06,
    0.03,
    -0.03,
    0.13
   ],
   "half_width": [
-   0.33,
+   0.34,
    0.21,
    0.3,
    0.3,
@@ -173,7 +173,7 @@
  "notes": {
   "dynamics": "link inertials fitted to 02_f1, 03_f2, 04_f3, 16_f1b, 17_f2b, 18_f3b (fit_inertial.py, gamma 1000); joint values nominal",
   "delays": "assumed in the joint fit: Delays(dq_lag=3, torque_lag=2, cutoff=100.0, rate_limit=1.0)",
-  "joints": "fitted to 01_r1, 05_r2, 15_r3, 19_r4, 07_s_p1, 08_s_p2, 09_s_p3, 10_s_p4, 11_s_p5, 12_s_p6 (identify.py, fields armature,frictionloss,damping,bias, gravity offset True); kept at the start: armature1, armature2, armature3, armature4",
+  "joints": "fitted to 01_r1, 05_r2, 15_r3, 19_r4, 07_s_p1, 08_s_p2, 09_s_p3, 10_s_p4, 11_s_p5, 12_s_p6 (identify.py, fields armature,frictionloss,damping,bias, gravity offset True); fixed at the start: armature1, armature2, armature3, armature4",
   "torque_bias": "range of the per-run totals over 13 runs (bias_per_run.py), widened by 0.1 N m on each side"
  }
 }

@@ -4,15 +4,11 @@ Every segment starts and ends at offset zero with zero target velocity, so
 segments can be joined and a session ends where it started.
 
 - ``hold``: the start pose; the controller holds still.
-- ``joint_steps``: one joint at a time steps by a small offset and back (the
-  step response shows the inertia, damping and friction of each joint).
 - ``policy_steps``: targets that jump every 20 ms, like those of a learned
   policy at 50 Hz (measured q plus a scaled action), here a mean-reverting
   random walk so that the targets stay near the start.
 - ``multisine``: smooth sums of sines, a different set of frequencies per
   joint, faded in and out.
-- ``ramps``: one joint at a time sweeps slowly out and back at constant
-  speed (friction at low speed, stick-slip).
 - ``graded_steps``: every joint steps from rest by a ladder of sizes, from
   inside the dry-friction dead band (friction / kp, 0.8-1.9 deg at kp 40)
   to well beyond it.
@@ -42,19 +38,6 @@ class Segment:
 
 def hold(duration: float) -> Segment:
   return Segment("hold", np.zeros((round(duration / DT), 7)))
-
-
-def joint_steps(step: float | np.ndarray, hold_time: float = 1.0,
-                joints: tuple[int, ...] = tuple(range(7))) -> Segment:
-  """Each joint in turn: +step for ``hold_time``, back to zero for ``hold_time``."""
-  step = np.broadcast_to(np.asarray(step, dtype=float), (7,))
-  n = round(hold_time / DT)
-  rows = []
-  for j in joints:
-    block = np.zeros((2 * n, 7))
-    block[:n, j] = step[j]
-    rows.append(block)
-  return Segment("joint_steps", np.concatenate(rows))
 
 
 def policy_steps(duration: float, sigma: float | np.ndarray, bound: float | np.ndarray,
@@ -114,29 +97,6 @@ def multisine(duration: float, amplitude: float | np.ndarray, f_min: float = 0.1
   return Segment("multisine", offsets * amplitude / np.abs(offsets).max(0).clip(1e-12))
 
 
-def ramps(amplitude: float | np.ndarray, speed: float | np.ndarray, pause: float = 0.5,
-          joints: tuple[int, ...] = tuple(range(7))) -> Segment:
-  """Each joint in turn: 0 -> +a -> -a -> 0 at constant speed, with pauses at the ends.
-
-  The corners are rounded over 0.1 s so the target's acceleration stays bounded.
-  """
-  amplitude = np.broadcast_to(np.asarray(amplitude, dtype=float), (7,))
-  speed = np.broadcast_to(np.asarray(speed, dtype=float), (7,))
-  rows = []
-  for j in joints:
-    a, v = amplitude[j], speed[j]
-    knots = [0.0, a, a, -a, -a, 0.0, 0.0]
-    times = [0.0, a / v, pause, 2 * a / v, pause, a / v, pause]
-    t_knots = np.cumsum(times)
-    t = np.arange(round(t_knots[-1] / DT)) * DT
-    path = np.interp(t, t_knots, knots)
-    k = round(0.1 / DT)
-    smooth = np.convolve(np.pad(path, k, mode="edge"), np.ones(2 * k + 1) / (2 * k + 1), "same")[k:-k]
-    block = np.zeros((len(t), 7))
-    block[:, j] = smooth
-    rows.append(block)
-  return Segment("ramps", np.concatenate(rows))
-
 
 def graded_steps(sizes: list[float], hold: float = 1.2, seed: int = 0) -> Segment:
   """Every joint steps from rest by each of ``sizes`` (rad), both ways.
@@ -161,7 +121,7 @@ def sweeps(speed: float, amplitude: float, cycles: int = 2, spread: float = 0.3)
 
   Joint j's amplitude is ``amplitude`` (1 + spread j / 6), so the joints turn
   at different times; joints that finish early hold zero. The corners are
-  rounded over 0.1 s, as in ``ramps``.
+  rounded over 0.1 s.
   """
   paths = []
   for j in range(7):
@@ -231,10 +191,6 @@ def join(segments: list[Segment], gap: float = 1.0) -> tuple[np.ndarray, list[tu
 def session(name: str, seed: int = 0) -> tuple[np.ndarray, list[tuple[str, float, float]]]:
   """The planned sessions.
 
-  - ``smoke``: hold, then each joint steps by 0.02 rad and back. About 20 s.
-    Run it first, to see that the controller holds and settles on the real arm.
-  - ``excite``: hold, joint steps, policy-like steps, multisine, ramps. About
-    two minutes.
   - ``reference``: the drift and repeatability check of the campaign (always
     seed 0, so every repeat is identical): hold, graded steps, sweeps at
     0.02 rad/s, policy-like steps. About a minute.
@@ -242,16 +198,6 @@ def session(name: str, seed: int = 0) -> tuple[np.ndarray, list[tuple[str, float
     (4-48 mrad), sweeps at 5, 20 and 60 mrad/s, policy-like steps,
     multisine. About two and a half minutes.
   """
-  if name == "smoke":
-    return join([hold(3.0), joint_steps(0.02)])
-  if name == "excite":
-    return join([
-      hold(3.0),
-      joint_steps(0.03),
-      policy_steps(20.0, sigma=0.01, bound=0.05, correlation_time=0.3, seed=seed),
-      multisine(30.0, amplitude=[0.05, 0.04, 0.05, 0.05, 0.08, 0.08, 0.10], f_max=1.0, seed=seed),
-      ramps(amplitude=0.05, speed=0.03),
-    ])
   if name == "reference":
     return join([
       hold(2.0),

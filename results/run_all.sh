@@ -4,8 +4,7 @@ set -e
 cd "$(dirname "$0")/.."
 uv run python scripts/fit_inertial.py --logs data/campaign --out results/inertial
 uv run python scripts/identify.py --logs data/campaign --model results/inertial/model.json \
-  --fields armature,frictionloss,damping,bias --gravity-offset --init results/joints/init.json \
-  --keep armature1,armature2,armature3,armature4 --out results/joints
+  --gravity-offset --fix armature1,armature2,armature3,armature4 --out results/joints
 uv run python scripts/bias_per_run.py --logs data/campaign --model results/joints/model.json \
   --out results/bias --model-out results/model.json
 uv run python scripts/validate.py --logs data/campaign --model published:nominal \

@@ -61,18 +61,20 @@ what the data determine.
 
 **Joints** (`results/joints`, `results/model.json`). Fitted on 10 runs
 under joint impedance (four repeats of a reference session and six pose
-sessions), with the identified inertials and the delays below.
+sessions), with the identified inertials and the delays below, starting
+from the published values.
 
 | Joint | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Dry friction (N m) | 0.666 | 1.103 | 0.586 | 0.831 | 0.611 | 0.587 | 0.445 |
-| Damping (N m s/rad) | 6.35 | 1.68 | 6.23 | 0.46 | 0 | 0 | 0 |
-| Armature (kg m^2) | 0.195* | 0.195* | 0.276* | 0.085* | 0.088 | 0.086 | 0.088 |
-| Torque bias, center (N m) | 0.18 | 0.35 | 0.18 | 0.06 | 0.03 | -0.03 | 0.13 |
-| Torque bias, +- half-width (N m) | 0.33 | 0.21 | 0.30 | 0.30 | 0.20 | 0.18 | 0.16 |
+| Dry friction (N m) | 0.723 | 1.104 | 0.637 | 0.829 | 0.611 | 0.587 | 0.445 |
+| Damping (N m s/rad) | 3.19 | 1.69 | 4.94 | 0.58 | 0 | 0 | 0 |
+| Armature (kg m^2) | 0.195* | 0.195* | 0.195* | 0.195* | 0.088 | 0.083 | 0.088 |
+| Torque bias, center (N m) | 0.19 | 0.35 | 0.19 | 0.06 | 0.03 | -0.03 | 0.13 |
+| Torque bias, +- half-width (N m) | 0.34 | 0.21 | 0.30 | 0.30 | 0.20 | 0.18 | 0.16 |
 
-\* Not identifiable from these slow runs (any value moves a replay by less
-than 0.003 deg); kept from an earlier fit.
+\* Not identifiable from these slow runs (any value from 0.02 to 0.4 moves
+the replays by less than 0.003 deg); left out of the fit at the FR3's
+published value.
 
 **Controller delays**: the robot's measured joint velocity is 3 ms late, a
 torque command acts 2 ms after it is sent, and libfranka low-pass filters
@@ -90,22 +92,22 @@ usually starts from.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Floor: the robot against itself | 0.17 | 0.25 | 0.11 | 0.08 | 0.14 | 0.10 | 0.14 |
 | V1, published values | 0.40 | 0.62 | 0.37 | 0.21 | 0.35 | 0.39 | 0.28 |
-| V1, identified, with V1's bias | 0.15 | 0.26 | 0.09 | 0.12 | 0.21 | 0.12 | 0.12 |
+| V1, identified, with V1's bias | 0.14 | 0.26 | 0.09 | 0.12 | 0.21 | 0.12 | 0.12 |
 | V2, published values | 0.74 | 0.83 | 0.69 | 0.24 | 0.22 | 0.36 | 0.29 |
-| V2, identified, with V2's bias | 0.13 | 0.37 | 0.11 | 0.15 | 0.14 | 0.10 | 0.09 |
+| V2, identified, with V2's bias | 0.12 | 0.37 | 0.10 | 0.15 | 0.14 | 0.10 | 0.09 |
 
 ![Validation](results/validate/validate.png)
 
 The bias changes with the pose: with each other's bias, V1 and V2 miss by
-0.56-0.57 deg on joint 1 and 0.76-0.78 deg on joint 3. So a simulation
+0.54-0.56 deg on joint 1 and 0.75-0.77 deg on joint 3. So a simulation
 should draw it for each episode from the range in `model.json`, which
 covers the 13 runs at eight poses plus 0.1 N m on each side.
 
 **Large moves** (`results/replay`). The slow straight-line moves between
 the poses (end effector 17-38 cm, joints up to 22-63 deg), replayed from
 their first measured state, with the bias at the center of its range: the
-end effector misses the robot's by 3.3 mm on average on the moves in the
-fit and 3.0 mm on three moves no fit saw, against 10.0 and 9.8 mm with the
+end effector misses the robot's by 3.2 mm on average on the moves in the
+fit and 2.9 mm on three moves no fit saw, against 10.0 and 9.8 mm with the
 published values (largest error 10.3 mm against 24.0 mm).
 `results/replay/moves.mp4` shows them, the simulated arms' errors magnified
 five times.
@@ -184,7 +186,7 @@ Control box, libfranka in the version that your robot's system version
 needs ([compatibility](https://frankaemika.github.io/docs/compatibility.html)),
 Python 3.10 or newer with [uv](https://docs.astral.sh/uv/), ffmpeg, and for
 the videos a GPU with EGL. The fits run on CPU cores (the joint fit takes
-half an hour on 100 cores).
+about 20 minutes on 100 cores).
 
 The tools assume **the Franka Hand** with its Desk default end-effector
 settings. With another end effector, change `panda_sysid.model._franka_hand`
@@ -235,7 +237,7 @@ real/build/stream_state 172.16.0.2 1 1          # the robot's state, once
    ```bash
    uv run python scripts/fit_inertial.py --logs runs/campaign --out runs/fit/inertial
    uv run python scripts/identify.py --logs runs/campaign --model runs/fit/inertial/model.json \
-       --gravity-offset --out runs/fit/joints
+       --gravity-offset --fix armature1,armature2,armature3,armature4 --out runs/fit/joints
    uv run python scripts/bias_per_run.py --logs runs/campaign --model runs/fit/joints/model.json \
        --out runs/fit/bias --model-out runs/fit/model.json
    ```
@@ -246,10 +248,8 @@ real/build/stream_state 172.16.0.2 1 1          # the robot's state, once
        --out runs/fit/validate
    ```
 
-`results/run_all.sh` is steps 5 and 6 as we ran them on our logs, plus the
-video of the large moves (`scripts/replay_video.py`). Our `identify.py` run
-started from an earlier fit's values (`results/joints/init.json`) and kept
-their armature for joints 1-4.
+`results/run_all.sh` is steps 5 and 6 on our logs, plus the video of the
+large moves (`scripts/replay_video.py`).
 
 ## Data
 

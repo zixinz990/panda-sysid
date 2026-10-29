@@ -6,9 +6,10 @@ measured state under the logged q_d with the robot's controller
 rate limit, a torque delay), on the model with that log's gains (--kp: one
 value, or one per log). All logs share the joint parameters (--fields:
 armature, dry friction, damping, and a constant torque bias). The fit starts
-from the joint values of --model, or of --init, and reports per parameter
-the start and fitted values with 95% confidence half-widths, and the RMS
-errors of q and dq at the start and after.
+from the joint values of --model (fit_inertial.py's model.json carries the
+published ones); --fix leaves parameters out of the fit at those values. It
+reports per parameter the start and fitted values with 95% confidence
+half-widths, and the RMS errors of q and dq at the start and after.
 
 --gravity-offset (logs with gravity columns) adds what the robot's gravity
 compensation adds beyond the model's gravity (``fit.add_gravity_offset``), so
@@ -17,13 +18,11 @@ match the robot (fit_inertial.py's model.json).
 
 Outputs in --out:
   params.json   start, fit, ci95 per parameter; RMS at the start and after; the logs
-  model.json    --model with the fitted joint values (but --keep's start values)
-                and the delays (``panda_sysid.simmodel``)
+  model.json    --model with the fitted joint values and the delays (``panda_sysid.simmodel``)
 
 Example (the campaign's joint fit):
   uv run python scripts/identify.py --logs data/campaign --model results/inertial/model.json \\
-      --fields armature,frictionloss,damping,bias --gravity-offset --init results/joints/init.json \\
-      --keep armature1,armature2,armature3,armature4 --out results/joints
+      --gravity-offset --fix armature1,armature2,armature3,armature4 --out results/joints
 """
 
 from __future__ import annotations
@@ -39,6 +38,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
+from mujoco import sysid
 
 from panda_sysid import campaign, delayed, fit, simmodel
 from panda_sysid import model as sysid_model
@@ -54,8 +54,7 @@ def main() -> None:
   parser.add_argument("--fields", default="armature,frictionloss,damping,bias")
   parser.add_argument("--chunk", type=float, default=4.0, help="seconds per rollout")
   parser.add_argument("--max-iters", type=int, default=50)
-  parser.add_argument("--init", help="start from this params.json's fit instead of --model's joint values")
-  parser.add_argument("--keep", default="", help="parameters model.json keeps at their start values")
+  parser.add_argument("--fix", default="", help="parameters left out of the fit, at --model's values")
   parser.add_argument("--dq-lag", type=int, default=delayed.MEASURED.dq_lag, help="ticks")
   parser.add_argument("--torque-lag", type=int, default=delayed.MEASURED.torque_lag, help="ticks")
   parser.add_argument("--cutoff", type=float, default=delayed.MEASURED.cutoff, help="Hz")
@@ -84,18 +83,14 @@ def main() -> None:
   groups = [(sysid_model.make_spec(kp, args.kd, dynamics).compile(), chunks) for kp, chunks in by_gain.items()]
   for kp, chunks in by_gain.items():
     print(f"kp {kp:g}: {len(chunks)} chunks of {args.chunk} s")
-  params = fit.make_params(tuple(args.fields.split(",")), nominal=groups[0][0])
+  fixed = [name for name in args.fix.split(",") if name]
+  params = sysid.ParameterDict()
+  for name, param in fit.make_params(tuple(args.fields.split(",")), nominal=groups[0][0]).items():
+    if name not in fixed:
+      params.add(param)
+  if unknown := set(fixed) - set(dynamics.joint_values()):
+    parser.error(f"--fix: no such parameters {sorted(unknown)}")
   start = params.copy()
-  start_values = {**dynamics.joint_values(), **{name: 0.0 for name in params.keys() if name.startswith("bias")}}
-  if args.init:
-    init = json.loads(Path(args.init).read_text())["fit"]
-    start_values.update({name: init[name] for name in params.keys() if name in init})
-    for name, param in start.items():
-      if name not in init:
-        continue
-      lo, hi = param.get_bounds()
-      margin = 0.01 * (hi[0] - lo[0])  # off the bounds, as make_params
-      param.value[0] = np.clip(init[name], lo[0] + margin, hi[0] - margin)
   delays = delayed.Delays(args.dq_lag, args.torque_lag, args.cutoff, args.rate_limit)
   print(f"controller: {delays}")
   problem = delayed.Problem(groups, delays, args.workers)
@@ -115,12 +110,11 @@ def main() -> None:
     print(f"{name:>14} {start[name].value[0]:9.4f} {p_fit.value[0]:9.4f} {ci:9.4f}")
   for label, rms in (("start", rms_start), ("fit", rms_fit)):
     print(f"RMS {label:>5}: q (deg) {np.round(rms['q_deg'], 4)}  dq (deg/s) {np.round(rms['dq_deg_s'], 3)}")
-  keep = [k for k in args.keep.split(",") if k]
   fitted = {name: float(p.value[0]) for name, p in opt.items()}
   result = {
     "logs": args.logs, "runs": runs, "kp": gains, "kd": args.kd, "chunk_s": args.chunk,
-    "delays": delays.as_dict(), "model": args.model, "init": args.init, "cost": cost,
-    "gravity_offset": args.gravity_offset, "keep": keep,
+    "delays": delays.as_dict(), "model": args.model, "cost": cost,
+    "gravity_offset": args.gravity_offset, "fixed": fixed,
     "start": {name: float(p.value[0]) for name, p in start.items()},
     "fit": fitted,
     "ci95": {name: float(ci) for name, ci in zip(opt.keys(), intervals)},
@@ -130,11 +124,11 @@ def main() -> None:
   }
   (out / "params.json").write_text(json.dumps(result, indent=2))
   # Joint values rounded to 1e-3 (finer digits mean nothing: the runs at other poses differ more).
-  values = {name: (start_values[name] if name in keep else round(v, 3)) for name, v in fitted.items()}
+  values = {name: round(v, 3) for name, v in fitted.items()}
   simmodel.save(replace(start_model, dynamics=dynamics.with_values(values), delays=delays, notes={
     **start_model.notes,
     "joints": f"fitted to {', '.join(runs)} (identify.py, fields {args.fields}, gravity offset "
-              f"{args.gravity_offset}); kept at the start: {', '.join(keep) or 'none'}",
+              f"{args.gravity_offset}); fixed at the start: {', '.join(fixed) or 'none'}",
     "delays": f"assumed in the joint fit: {delays}"}), out / "model.json")
   print("wrote", out / "params.json", out / "model.json")
 

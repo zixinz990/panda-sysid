@@ -101,7 +101,7 @@ def test_delayed_rollout_steps_toward_the_target():
 
 
 def test_sessions_start_and_end_at_the_pose():
-  for name in ("smoke", "excite", "reference", "pose"):
+  for name in ("reference", "pose"):
     offsets, spans = excitation.session(name, seed=1)
     assert np.abs(offsets[0]).max() == 0 and np.abs(offsets[-1]).max() == 0
     assert all(a < b for _, a, b in spans)
