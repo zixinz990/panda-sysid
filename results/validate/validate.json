@@ -1,29 +1,19 @@
 {
  "models": {
-  "published": {
+  "before identification": {
    "model": "nominal",
    "gravity_offset": false,
    "run_bias": "-"
   },
-  "identified": {
+  "identified, bias in the middle of its range": {
    "model": "results/model.json",
    "gravity_offset": true,
-   "run_bias": "-"
+   "run_bias": "center"
   },
-  "identified, own bias": {
+  "identified, bias fitted to the run": {
    "model": "results/model.json",
    "gravity_offset": true,
    "run_bias": "results/bias/bias_per_run.json"
-  },
-  "identified, H1's bias": {
-   "model": "results/model.json",
-   "gravity_offset": true,
-   "run_bias": "results/bias/bias_per_run.json@13_h_h1"
-  },
-  "identified, H2's bias": {
-   "model": "results/model.json",
-   "gravity_offset": true,
-   "run_bias": "results/bias/bias_per_run.json@14_h_h2"
   }
  },
  "floor_deg": [
@@ -93,7 +83,7 @@
  },
  "runs": {
   "13_h_h1": {
-   "published": {
+   "before identification": {
     "whole_deg": [
      0.428,
      0.766,
@@ -113,27 +103,27 @@
      0.283
     ]
    },
-   "identified": {
+   "identified, bias in the middle of its range": {
     "whole_deg": [
-     0.156,
-     0.257,
-     0.126,
-     0.144,
-     0.252,
-     0.142,
-     0.232
+     0.329,
+     0.485,
+     0.36,
+     0.183,
+     0.232,
+     0.169,
+     0.12
     ],
     "session_deg": [
-     0.144,
-     0.271,
-     0.133,
-     0.136,
-     0.234,
-     0.141,
-     0.25
+     0.345,
+     0.493,
+     0.383,
+     0.191,
+     0.216,
+     0.168,
+     0.117
     ]
    },
-   "identified, own bias": {
+   "identified, bias fitted to the run": {
     "whole_deg": [
      0.154,
      0.249,
@@ -151,51 +141,11 @@
      0.209,
      0.121,
      0.116
-    ]
-   },
-   "identified, H1's bias": {
-    "whole_deg": [
-     0.154,
-     0.249,
-     0.096,
-     0.14,
-     0.214,
-     0.119,
-     0.12
-    ],
-    "session_deg": [
-     0.139,
-     0.262,
-     0.088,
-     0.124,
-     0.209,
-     0.121,
-     0.116
-    ]
-   },
-   "identified, H2's bias": {
-    "whole_deg": [
-     0.521,
-     0.257,
-     0.708,
-     0.163,
-     0.224,
-     0.149,
-     0.128
-    ],
-    "session_deg": [
-     0.544,
-     0.267,
-     0.745,
-     0.134,
-     0.209,
-     0.148,
-     0.113
     ]
    }
   },
   "14_h_h2": {
-   "published": {
+   "before identification": {
     "whole_deg": [
      0.767,
      0.807,
@@ -215,67 +165,27 @@
      0.291
     ]
    },
-   "identified": {
+   "identified, bias in the middle of its range": {
     "whole_deg": [
-     0.513,
-     0.388,
-     0.657,
-     0.184,
-     0.153,
-     0.103,
-     0.255
-    ],
-    "session_deg": [
-     0.534,
-     0.403,
-     0.679,
-     0.18,
-     0.137,
-     0.103,
-     0.243
-    ]
-   },
-   "identified, own bias": {
-    "whole_deg": [
-     0.148,
-     0.353,
-     0.139,
-     0.15,
+     0.267,
+     0.486,
+     0.4,
+     0.243,
      0.145,
      0.1,
-     0.092
+     0.107
     ],
     "session_deg": [
-     0.123,
-     0.365,
-     0.103,
-     0.152,
-     0.136,
-     0.1,
-     0.086
-    ]
-   },
-   "identified, H1's bias": {
-    "whole_deg": [
-     0.539,
-     0.375,
-     0.743,
-     0.167,
-     0.182,
+     0.275,
+     0.49,
+     0.411,
+     0.239,
      0.133,
-     0.106
-    ],
-    "session_deg": [
-     0.561,
-     0.389,
-     0.767,
-     0.164,
-     0.184,
-     0.136,
-     0.093
+     0.098,
+     0.094
     ]
    },
-   "identified, H2's bias": {
+   "identified, bias fitted to the run": {
     "whole_deg": [
      0.148,
      0.353,

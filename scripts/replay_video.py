@@ -7,12 +7,12 @@ published values with an ideal controller) and --model-b (default: ours,
 with its delays and the torque bias at the center of its range).
 
 Outputs in --out:
-  <from>_<to>.mp4  per move no fit used (--video-runs), e.g. h1_h2.mp4: the
+  move_<n>.mp4     per move no fit used (--video-runs), in campaign order: the
                    robot's measured joint angles and the simulations of
                    --model-b (green) and --model-a (red) on the same
                    commands, their joint errors drawn --magnify times
                    larger, with the end-effector paths
-  <from>_<to>.gif  the same, smaller (for the README)
+  move_<n>.gif     the same, smaller (for the README)
   moves.png        mean end-effector error per move, both models
   moves.json       end-effector errors per move (mm)
 
@@ -149,10 +149,11 @@ def make_video(args) -> None:
   rgba = {key: (*COLORS[key], 1.0) for key in ("a", "b")}
   big, small = video.font(28), video.font(22)
   lines = [("Real Panda, its measured joint angles: white arm, dark path", dark[:3], big),
-           (f"Simulation, {names['b']} model, same commands: green", rgba["b"][:3], big),
-           (f"Simulation before identification ({names['a']}): red", rgba["a"][:3], big),
+           (f"Simulation, {names['b']}: green", rgba["b"][:3], big),
+           (f"Simulation, {names['a']}: red", rgba["a"][:3], big),
            (f"A move no fit used: end effector {move['travel_mm'] / 10:.0f} cm, joints up to "
-            f"{move['joint_deg']:.0f} deg. Errors drawn {magnify:g}x, {speed:g}x speed.",
+            f"{move['joint_deg']:.0f} deg. Both simulations get the robot's commands. Errors drawn "
+            f"{magnify:g}x, {speed:g}x speed.",
             (0.35, 0.35, 0.38), small)]
 
   def rgb255(color):
@@ -199,7 +200,7 @@ def make_video(args) -> None:
         draw.text((36, 26 + 42 * i), text, font=font, fill=rgb255(color))
       draw.text((36, H - 110), "End-effector distance to the real one (true size):", font=big, fill=rgb255(dark))
       draw.text((36, H - 66), f"{names['b']} {err['b'][k]:5.1f} mm", font=big, fill=rgb255(rgba["b"]))
-      draw.text((420, H - 66), f"before identification {err['a'][k]:5.1f} mm", font=big, fill=rgb255(rgba["a"]))
+      draw.text((420, H - 66), f"{names['a']} {err['a'][k]:5.1f} mm", font=big, fill=rgb255(rgba["a"]))
       writer.add_image(np.asarray(image))
   renderer.close()
   segmenter.close()
@@ -216,12 +217,13 @@ def summary_figure(moves, labels, fitted, names, out) -> dict:
   means = {key: [m[f"ee_{key}"].mean() for m in moves] for key in ("a", "b")}
   ax.bar(x - 0.19, means["a"], 0.38, color=COLORS["a"], label=names["a"])
   ax.bar(x + 0.19, means["b"], 0.38, color=COLORS["b"], label=names["b"])
-  ax.set(xticks=x, xticklabels=labels, ylabel="mean end-effector error (mm)")
+  ax.set(xticks=x, xticklabels=[f"{m['travel_mm'] / 10:.0f} cm\n{m['joint_deg']:.0f} deg" for m in moves],
+         xlabel="each move: end-effector travel, largest joint turn", ylabel="mean end-effector error (mm)")
   for i in range(len(moves)):
     if not fitted[i]:
       ax.axvspan(i - 0.5, i + 0.5, color="0.94", zorder=0)
   ax.legend(fontsize=11, loc="upper left")
-  ax.set_title("Simulated minus real end-effector position per move (gray: no fit used it)", fontsize=12)
+  ax.set_title("Simulated minus measured end-effector position per move (gray: moves no fit used)", fontsize=12)
   fit_mask = np.array(fitted)
   summary = {"runs": [m["run"] for m in moves], "labels": labels, "fitted": fitted,
              "travel_mm": [round(m["travel_mm"]) for m in moves], "joint_deg": [round(m["joint_deg"]) for m in moves]}
@@ -236,9 +238,10 @@ def summary_figure(moves, labels, fitted, names, out) -> dict:
   for label, field in (("moves in the fit", "mean_fitted_mm"), ("moves no fit used", "mean_held_out_mm")):
     if summary["a"][field] is not None:
       y -= 0.08
-      fig.text(0.69, y, f"{label}: {summary['a'][field]:.1f} -> {summary['b'][field]:.1f} mm", fontsize=12)
-  fig.text(0.69, y - 0.08, f"largest: {summary['a']['max_mm']:.1f} -> {summary['b']['max_mm']:.1f} mm",
+      fig.text(0.69, y, f"{label}: {summary['a'][field]:.1f} mm, {summary['b'][field]:.1f} mm", fontsize=12)
+  fig.text(0.69, y - 0.08, f"largest: {summary['a']['max_mm']:.1f} mm, {summary['b']['max_mm']:.1f} mm",
            fontsize=12, color="0.3")
+  fig.text(0.69, y - 0.16, f"({names['a']}, {names['b']})", fontsize=11, color="0.3")
   fig.savefig(out / "moves.png")
   plt.close(fig)
   return summary
@@ -250,7 +253,7 @@ def main() -> None:
   parser.add_argument("--runs", default=",".join(DEFAULT_RUNS), help="runs whose first segment is a move")
   parser.add_argument("--fitted", default=",".join(campaign.JOINT_FIT), help="runs the joint fit used")
   parser.add_argument("--model-a", default="nominal", help="model.json, or 'nominal'")
-  parser.add_argument("--name-a", default="published values, no delays")
+  parser.add_argument("--name-a", default="before identification")
   parser.add_argument("--model-b", default=str(simmodel.OURS))
   parser.add_argument("--name-b", default="identified")
   parser.add_argument("--video-runs", default="", help="runs whose moves get a video (default: those no fit used)")
@@ -277,7 +280,7 @@ def main() -> None:
   print(json.dumps(summary, indent=1))
   shown = [runs.index(run) for run in args.video_runs.split(",")] if args.video_runs else \
           [i for i, f in enumerate(fitted) if not f]
-  stems = [out / labels[i].lower().replace("->", "_") for i in shown]
+  stems = [out / f"move_{n + 1}" for n in range(len(shown))]
   from panda_sysid import video
   with video.render_pool(1, video.parse_gpus(args.gpu)) as pool:
     pool.map(make_video, [(moves[i], {"a": args.name_a, "b": args.name_b}, stem, args.speed, args.magnify)

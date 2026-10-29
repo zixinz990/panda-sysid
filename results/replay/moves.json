@@ -50,7 +50,7 @@
   22
  ],
  "a": {
-  "model": "published values, no delays",
+  "model": "before identification",
   "mean_per_move_mm": [
    8.67,
    10.17,

@@ -11,21 +11,23 @@ motion, and fits a MuJoCo model of your arm:
 - the range of the **torque bias** the robot's gravity compensation leaves.
 
 Our Panda on the three moves no fit used. White: the robot's measured joint
-angles; green: the identified model; red: the published values without
-delays. The simulated arms' errors are drawn five times larger; the numbers
-are the true mean end-effector errors of green and red.
+angles; green: the identified model; red: the model before identification
+(Franka's link inertials, friction from Gaz et al. 2019, no controller
+delays), what a Panda simulation usually starts from. The simulated arms'
+errors are drawn five times larger; the numbers are the true mean
+end-effector errors of green and red.
 
 **Move 1** (end effector 24 cm, joints up to 63 deg): 2.7 mm and 6.2 mm
 
-![Move 1](results/replay/p6_h1.gif)
+![Move 1](results/replay/move_1.gif)
 
 **Move 2** (end effector 36 cm, joints up to 42 deg): 3.5 mm and 14.5 mm
 
-![Move 2](results/replay/h1_h2.gif)
+![Move 2](results/replay/move_2.gif)
 
 **Move 3** (end effector 17 cm, joints up to 22 deg): 2.5 mm and 8.8 mm
 
-![Move 3](results/replay/h2_p1.gif)
+![Move 3](results/replay/move_3.gif)
 
 All results: [results/README.md](results/README.md).
 
@@ -54,17 +56,20 @@ sim.draw_bias(np.random.default_rng())         # a torque bias for one episode (
   position actuator per joint with the same gains. On the robot, `dq` is 3 ms
   late, libfranka filters the torque and limits its rate, and a command acts
   2 ms after it is sent; `panda_sysid.delayed` models all of it.
-- **Campaign** (`panda_sysid.campaign`, 19 runs). Reference sessions at the
-  box center for the repeatability floor, Fourier runs under Franka's position
-  controller for the inertials, and sessions at six poses plus two held-out
-  ones for the joints. Every run is simulated and checked before it
-  runs, and planned again from the measured state.
+- **Campaign** (`panda_sysid.campaign`, 19 runs). A one-minute reference
+  session at the box center, repeated to measure how repeatable the robot
+  is; Fourier runs (large periodic motions of every joint) under Franka's
+  position controller for the inertials; and sessions of small steps and
+  slow sweeps at six poses for the joints, plus two held-out poses. Every
+  run is simulated and checked before it runs, and planned again from the
+  measured state.
 - **Link inertials** (`panda_sysid.inertial`). Least squares on `tau_J`,
   kept physically consistent by a log-det divergence from Franka's values
   (Lee, Wensing and Park, T-RO 2020).
 - **Joints** (`panda_sysid.fit`). Levenberg-Marquardt (`mujoco.sysid`) on
-  4 s rollouts of the impedance runs, from the published values; then a bias
-  per run, whose range over all runs is the bias range.
+  4 s rollouts of the impedance runs, starting from the values before
+  identification; then the torque bias each run needs, whose range over all
+  runs is the model's bias range.
 
 ## Calibrate your own Panda
 
@@ -116,8 +121,8 @@ cmake --build real/build
    ```
 6. **Validate** on the held-out poses.
    ```bash
-   uv run python scripts/validate.py --logs runs/campaign --model published:nominal \
-       --model "identified, own bias:runs/fit/model.json:1:runs/fit/bias/bias_per_run.json" \
+   uv run python scripts/validate.py --logs runs/campaign --model "before identification:nominal" \
+       --model "identified:runs/fit/model.json:1:center" \
        --out runs/fit/validate
    ```
 
@@ -150,7 +155,7 @@ tests/             uv run --group dev pytest
 
 ## Credits
 
-Arm and hand models: MuJoCo Menagerie (Apache-2.0). Published inertials:
-Franka (franka_description); nominal friction: Gaz et al., RA-L 2019; nominal
-armature: Menagerie's FR3. Inertial fit after Lee, Wensing and Park, T-RO
+Arm and hand models: MuJoCo Menagerie (Apache-2.0). The model before
+identification: inertials from Franka (franka_description), friction from
+Gaz et al., RA-L 2019, armature from Menagerie's FR3. Inertial fit after Lee, Wensing and Park, T-RO
 2020. License: Apache-2.0.

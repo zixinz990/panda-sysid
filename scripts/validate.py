@@ -3,16 +3,16 @@
 Each --model is label:model[:offset[:bias]], where model is a model.json (or
 "nominal": the published values with an ideal controller), offset (0 or 1,
 default 0) adds what the robot's gravity compensation adds beyond the model's
-gravity (``fit.add_gravity_offset``), and bias is a bias_per_run.json whose
-bias for the run is added (each run its own; bias_per_run.json@<run> adds that
-run's bias to every run). Each log is rolled out from its
+gravity (``fit.add_gravity_offset``), and bias is "center" (the middle of
+model.json's bias range) or a bias_per_run.json whose bias for the run is added
+(each run its own; bias_per_run.json@<run> adds that run's bias to every run). Each log is rolled out from its
 first state over its whole length with the model's controller
 (``panda_sysid.delayed``; the run's libfranka cutoff from its plan.json) and
 compared with the measured q.
 
-The floor: the reference runs (--floor) repeat one session at P1; the RMS
-difference of their measured q, aligned at the session's start, is what no
-model can beat. Errors are given over the whole run and over its session
+The floor (the robot's repeatability): the reference runs (--floor) repeat
+one session; the RMS difference of their measured q, aligned at the session's
+start, is what no model can beat. Errors are given over the whole run and over its session
 (after the move to the pose), which is what the floor covers.
 
 Outputs in --out:
@@ -20,9 +20,9 @@ Outputs in --out:
   validate.png    the errors per joint against the floor, and one run's q over time
 
 Example:
-  uv run python scripts/validate.py --logs data/campaign --model published:nominal \\
-      --model identified:results/model.json:1 \\
-      --model "identified, own bias:results/model.json:1:results/bias/bias_per_run.json" --out results/validate
+  uv run python scripts/validate.py --logs data/campaign --model "before identification:nominal" \\
+      --model "identified, bias fitted to the run:results/model.json:1:results/bias/bias_per_run.json" \\
+      --out results/validate
 """
 
 from __future__ import annotations
@@ -59,7 +59,9 @@ def _replay(args) -> tuple[str, str, np.ndarray]:
   rec = fit.load_log(fit.find_log(f"{root}/{run}"), run)
   sim = simmodel.load(path)
   model = sysid_model.make_spec(KP, KD, sim.dynamics).compile()
-  if run_bias != "-":
+  if run_bias == "center":
+    model = fit.apply_values(model, {f"bias{j + 1}": b for j, b in enumerate(sim.bias_center)})
+  elif run_bias != "-":
     path, _, source = run_bias.partition("@")
     bias = json.loads(Path(path).read_text())["runs"][source or run]["bias"]
     model = fit.apply_values(model, {f"bias{j + 1}": b for j, b in enumerate(bias)})
@@ -125,23 +127,26 @@ def main() -> None:
       print(f"  {label:12s} session {np.round(r['session_deg'], 3)}  whole {np.round(r['whole_deg'], 3)}")
   (out / "validate.json").write_text(json.dumps(result, indent=1))
 
+  names = {run: f"Held-out pose {campaign.HELD_OUT.index(run) + 1}" if run in campaign.HELD_OUT else run
+           for run in runs}
+  colors = ["tab:red", "tab:orange", "tab:green", "tab:blue", "tab:purple"]  # the videos' red and green
   fig, axes = plt.subplots(len(runs) + 1, 1, figsize=(13, 4 * len(runs) + 10))
   width = 0.8 / len(models)
   for ax, run in zip(axes, runs):
     for i, (label, *_) in enumerate(models):
       ax.bar(np.arange(7) + (i - (len(models) - 1) / 2) * width, result["runs"][run][label]["session_deg"],
-             width, label=label)
-    ax.plot(np.arange(7), floor, "k_", markersize=30, mew=2, label="floor (real vs real)")
-    ax.set(xticks=range(7), xticklabels=[f"joint {j + 1}" for j in range(7)], ylabel="RMS sim - real q [deg]",
-           title=f"{run}: whole-run replay, error over the session")
+             width, label=label, color=colors[i % len(colors)])
+    ax.plot(np.arange(7), floor, "k_", markersize=30, mew=2, label="the robot against itself (repeatability)")
+    ax.set(xticks=range(7), xticklabels=[f"joint {j + 1}" for j in range(7)], ylabel="angle error, RMS (deg)",
+           title=f"{names[run]}: simulated minus measured joint angles over the session")
     ax.legend(fontsize=8)
   run = runs[0]
   t = np.arange(len(errors[(models[0][0], run)])) * fit.DT
   ax = axes[-1]
-  for label, *_ in models:
-    ax.plot(t, np.degrees(errors[(label, run)][:, 1]), lw=0.7, label=label)
+  for i, (label, *_) in enumerate(models):
+    ax.plot(t, np.degrees(errors[(label, run)][:, 1]), lw=0.7, label=label, color=colors[i % len(colors)])
   ax.axhline(0, color="0.5", lw=0.5)
-  ax.set(xlabel="t [s]", ylabel="sim - real q2 [deg]", title=f"{run}: joint 2 error over time")
+  ax.set(xlabel="time (s)", ylabel="angle error (deg)", title=f"{names[run]}: joint 2, simulated minus measured")
   ax.legend(fontsize=8)
   fig.tight_layout()
   fig.savefig(out / "validate.png", dpi=90)
